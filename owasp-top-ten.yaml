@@ -11466,6 +11466,216 @@ rules:
         version_id: NdTzyL4
         url: https://semgrep.dev/playground/r/NdTzyL4/python.sqlalchemy.security.sqlalchemy-sql-injection.sqlalchemy-sql-injection
         origin: community
+- id: yaml.docker-compose.security.privileged-service.privileged-service
+  patterns:
+  - pattern-inside: "version: ...\n...\nservices:\n  ...\n  $SERVICE:\n    ...\n    privileged: $TRUE\n"
+  - focus-metavariable: $TRUE
+  - metavariable-regex:
+      metavariable: $TRUE
+      regex: (true)
+  fix: 'false
+
+    '
+  message: Service '$SERVICE' is running in privileged mode. This grants the container the equivalent of root capabilities on the host machine. This can lead to container escapes, privilege escalation, and other security concerns. Remove the 'privileged' key to disable this capability.
+  metadata:
+    cwe:
+    - 'CWE-250: Execution with Unnecessary Privileges'
+    owasp:
+    - A06:2017 - Security Misconfiguration
+    - A05:2021 - Security Misconfiguration
+    - A02:2025 - Security Misconfiguration
+    references:
+    - https://www.trendmicro.com/en_us/research/19/l/why-running-a-privileged-container-in-docker-is-a-bad-idea.html
+    - https://containerjournal.com/topics/container-security/why-running-a-privileged-container-is-not-a-good-idea/
+    category: security
+    technology:
+    - docker-compose
+    subcategory:
+    - vuln
+    likelihood: HIGH
+    impact: HIGH
+    confidence: HIGH
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/yaml.docker-compose.security.privileged-service.privileged-service
+    shortlink: https://sg.run/AlX0
+    semgrep.dev:
+      rule:
+        r_id: 10006
+        rv_id: 1263922
+        rule_id: DbUW17
+        version_id: 0bTKzXZ
+        url: https://semgrep.dev/playground/r/0bTKzXZ/yaml.docker-compose.security.privileged-service.privileged-service
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
+- id: yaml.kubernetes.security.allow-privilege-escalation.allow-privilege-escalation
+  patterns:
+  - pattern-inside: "containers:\n  ...\n"
+  - pattern-inside: "- name: $CONTAINER\n  ...\n"
+  - pattern: 'image: ...
+
+      ...
+
+      '
+  - pattern-inside: "image: ...\n...\n$SC:\n  ...\n"
+  - metavariable-regex:
+      metavariable: $SC
+      regex: ^(securityContext)$
+  - pattern-not-inside: "image: ...\n...\nsecurityContext:\n  ...\n  allowPrivilegeEscalation: $VAL\n"
+  - focus-metavariable: $SC
+  fix: "securityContext:\n  allowPrivilegeEscalation: false #\n"
+  message: In Kubernetes, each pod runs in its own isolated environment with its own set of security policies. However, certain container images may contain `setuid` or `setgid` binaries that could allow an attacker to perform privilege escalation and gain access to sensitive resources. To mitigate this risk, it's recommended to add a `securityContext` to the container in the pod, with the parameter `allowPrivilegeEscalation` set to `false`. This will prevent the container from running any privileged processes and limit the impact of any potential attacks. By adding the `allowPrivilegeEscalation` parameter to your the `securityContext`, you can help to ensure that your containerized applications are more secure and less vulnerable to privilege escalation attacks.
+  metadata:
+    cwe:
+    - 'CWE-732: Incorrect Permission Assignment for Critical Resource'
+    owasp:
+    - A05:2021 - Security Misconfiguration
+    - A06:2017 - Security Misconfiguration
+    - A02:2025 - Security Misconfiguration
+    references:
+    - https://kubernetes.io/docs/concepts/policy/pod-security-policy/#privilege-escalation
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    - https://www.kernel.org/doc/Documentation/prctl/no_new_privs.txt
+    - https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html#rule-4-add-no-new-privileges-flag
+    category: security
+    technology:
+    - kubernetes
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/yaml.kubernetes.security.allow-privilege-escalation.allow-privilege-escalation
+    shortlink: https://sg.run/ljp6
+    semgrep.dev:
+      rule:
+        r_id: 10057
+        rv_id: 1263933
+        rule_id: 6JUqEO
+        version_id: jQTn527
+        url: https://semgrep.dev/playground/r/jQTn527/yaml.kubernetes.security.allow-privilege-escalation.allow-privilege-escalation
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
+- id: yaml.kubernetes.security.seccomp-confinement-disabled.seccomp-confinement-disabled
+  patterns:
+  - pattern-inside: "containers:\n  ...\n"
+  - pattern: "image: ...\n...\nsecurityContext:\n  ...\n  seccompProfile: unconfined\n"
+  message: 'Container is explicitly disabling seccomp confinement. This runs the service in an unrestricted state. Remove ''seccompProfile: unconfined'' to prevent this.'
+  metadata:
+    cwe:
+    - 'CWE-284: Improper Access Control'
+    references:
+    - https://kubernetes.io/docs/concepts/policy/pod-security-policy/#seccomp
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    category: security
+    technology:
+    - kubernetes
+    owasp:
+    - A05:2017 - Broken Access Control
+    - A01:2021 - Broken Access Control
+    - A01:2025 - Broken Access Control
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/yaml.kubernetes.security.seccomp-confinement-disabled.seccomp-confinement-disabled
+    shortlink: https://sg.run/6rgY
+    semgrep.dev:
+      rule:
+        r_id: 10059
+        rv_id: 1263941
+        rule_id: zdUynw
+        version_id: w8TRoL3
+        url: https://semgrep.dev/playground/r/w8TRoL3/yaml.kubernetes.security.seccomp-confinement-disabled.seccomp-confinement-disabled
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
+- id: yaml.kubernetes.security.skip-tls-verify-cluster.skip-tls-verify-cluster
+  pattern: "cluster:\n  ...\n  insecure-skip-tls-verify: true\n"
+  message: 'Cluster is disabling TLS certificate verification when communicating with the server. This makes your HTTPS connections insecure. Remove the ''insecure-skip-tls-verify: true'' key to secure communication.'
+  metadata:
+    cwe:
+    - 'CWE-319: Cleartext Transmission of Sensitive Information'
+    references:
+    - https://kubernetes.io/docs/reference/config-api/client-authentication.v1beta1/#client-authentication-k8s-io-v1beta1-Cluster
+    category: security
+    technology:
+    - kubernetes
+    owasp:
+    - A03:2017 - Sensitive Data Exposure
+    - A02:2021 - Cryptographic Failures
+    - A04:2025 - Cryptographic Failures
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Mishandled Sensitive Information
+    source: https://semgrep.dev/r/yaml.kubernetes.security.skip-tls-verify-cluster.skip-tls-verify-cluster
+    shortlink: https://sg.run/okyn
+    semgrep.dev:
+      rule:
+        r_id: 10116
+        rv_id: 1263943
+        rule_id: zdUyWx
+        version_id: O9Tpxbo
+        url: https://semgrep.dev/playground/r/O9Tpxbo/yaml.kubernetes.security.skip-tls-verify-cluster.skip-tls-verify-cluster
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
+- id: yaml.kubernetes.security.skip-tls-verify-service.skip-tls-verify-service
+  pattern: "spec:\n  ...\n  insecureSkipTLSVerify: true\n"
+  message: 'Service is disabling TLS certificate verification when communicating with the server. This makes your HTTPS connections insecure. Remove the ''insecureSkipTLSVerify: true'' key to secure communication.'
+  metadata:
+    cwe:
+    - 'CWE-319: Cleartext Transmission of Sensitive Information'
+    references:
+    - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#apiservice-v1-apiregistration-k8s-io
+    category: security
+    technology:
+    - kubernetes
+    owasp:
+    - A03:2017 - Sensitive Data Exposure
+    - A02:2021 - Cryptographic Failures
+    - A04:2025 - Cryptographic Failures
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Mishandled Sensitive Information
+    source: https://semgrep.dev/r/yaml.kubernetes.security.skip-tls-verify-service.skip-tls-verify-service
+    shortlink: https://sg.run/zk10
+    semgrep.dev:
+      rule:
+        r_id: 10117
+        rv_id: 1263944
+        rule_id: pKUGXr
+        version_id: e1TyjnR
+        url: https://semgrep.dev/playground/r/e1TyjnR/yaml.kubernetes.security.skip-tls-verify-service.skip-tls-verify-service
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
 - id: java.spring.security.audit.spring-actuator-fully-enabled.spring-actuator-fully-enabled
   pattern: management.endpoints.web.exposure.include=*
   message: Spring Boot Actuator is fully enabled. This exposes sensitive endpoints such as /actuator/env, /actuator/logfile, /actuator/heapdump and others. Unless you have Spring Security enabled or another means to protect these endpoints, this functionality is available without authentication, causing a significant security risk.
@@ -11898,6 +12108,129 @@ rules:
     - pattern: "public $T $F($X)\n{\n  Regex $Y = new Regex($P, $O);\n  ...\n  $Y.Match($X);\n}\n"
     - pattern: "public $T $F($X)\n{\n  ... Regex.Match($X, $P);\n}\n"
     - pattern: "public $T $F($X)\n{\n  ... Regex.Match($X, $P, $O);\n}\n"
+- id: yaml.github-actions.security.run-shell-injection.run-shell-injection
+  languages:
+  - yaml
+  message: 'Using variable interpolation `${{...}}` with `github` context data in a `run:` step could allow an attacker to inject their own code into the runner. This would allow them to steal secrets and code. `github` context data can have arbitrary user input and should be treated as untrusted. Instead, use an intermediate environment variable with `env:` to store the data and use the environment variable in the `run:` script. Be sure to use double-quotes the environment variable, like this: "$ENVVAR".'
+  metadata:
+    category: security
+    cwe:
+    - 'CWE-78: Improper Neutralization of Special Elements used in an OS Command (''OS Command Injection'')'
+    owasp:
+    - A01:2017 - Injection
+    - A03:2021 - Injection
+    - A05:2025 - Injection
+    references:
+    - https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
+    - https://securitylab.github.com/research/github-actions-untrusted-input/
+    technology:
+    - github-actions
+    cwe2022-top25: true
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: HIGH
+    impact: HIGH
+    confidence: HIGH
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Command Injection
+    source: https://semgrep.dev/r/yaml.github-actions.security.run-shell-injection.run-shell-injection
+    shortlink: https://sg.run/pkzk
+    semgrep.dev:
+      rule:
+        r_id: 13162
+        rv_id: 1263930
+        rule_id: v8UjQj
+        version_id: pZT03YZ
+        url: https://semgrep.dev/playground/r/pZT03YZ/yaml.github-actions.security.run-shell-injection.run-shell-injection
+        origin: community
+  patterns:
+  - pattern-inside: 'steps: [...]'
+  - pattern-inside: "- run: ...\n  ...\n"
+  - pattern: 'run: $SHELL'
+  - metavariable-pattern:
+      language: generic
+      metavariable: $SHELL
+      patterns:
+      - pattern-either:
+        - pattern: ${{ ... github.event.issue.title ... }}
+        - pattern: ${{ ... github.event.issue.body ... }}
+        - pattern: ${{ ... github.event.pull_request.title ... }}
+        - pattern: ${{ ... github.event.pull_request.body ... }}
+        - pattern: ${{ ... github.event.comment.body ... }}
+        - pattern: ${{ ... github.event.review.body ... }}
+        - pattern: ${{ ... github.event.review_comment.body ... }}
+        - pattern: ${{ ... github.event.pages ... .page_name ... }}
+        - pattern: ${{ ... github.event.head_commit.message ... }}
+        - pattern: ${{ ... github.event.head_commit.author.email ... }}
+        - pattern: ${{ ... github.event.head_commit.author.name ... }}
+        - pattern: ${{ ... github.event.commits ... .author.email ... }}
+        - pattern: ${{ ... github.event.commits ... .author.name ... }}
+        - pattern: ${{ ... github.event.pull_request.head.ref ... }}
+        - pattern: ${{ ... github.event.pull_request.head.label ... }}
+        - pattern: ${{ ... github.event.pull_request.head.repo.default_branch ... }}
+        - pattern: ${{ ... github.head_ref ... }}
+        - pattern: ${{ ... github.event.inputs ... }}
+        - pattern: ${{ ... github.event.discussion.title ... }}
+        - pattern: ${{ ... github.event.discussion.body ... }}
+        - pattern: ${{ ... inputs ... }}
+      - pattern-not: ${{ ... github.event.issue.title && ... }}
+      - pattern-not: ${{ ... github.event.issue.body && ... }}
+      - pattern-not: ${{ ... github.event.pull_request.title && ... }}
+      - pattern-not: ${{ ... github.event.pull_request.body && ... }}
+      - pattern-not: ${{ ... github.event.comment.body && ... }}
+      - pattern-not: ${{ ... github.event.review.body && ... }}
+      - pattern-not: ${{ ... github.event.review_comment.body && ... }}
+      - pattern-not: ${{ ... github.event.head_commit.message && ... }}
+      - pattern-not: ${{ ... github.event.head_commit.author.email && ... }}
+      - pattern-not: ${{ ... github.event.head_commit.author.name && ... }}
+      - pattern-not: ${{ ... github.event.pull_request.head.ref && ... }}
+      - pattern-not: ${{ ... github.event.pull_request.head.label && ... }}
+      - pattern-not: ${{ ... github.event.pull_request.head.repo.default_branch && ... }}
+      - pattern-not: ${{ ... github.head_ref && ... }}
+      - pattern-not: ${{ ... github.event.discussion.title && ... }}
+      - pattern-not: ${{ ... github.event.discussion.body && ... }}
+  severity: ERROR
+- id: yaml.github-actions.security.allowed-unsecure-commands.allowed-unsecure-commands
+  languages:
+  - yaml
+  severity: WARNING
+  message: The environment variable `ACTIONS_ALLOW_UNSECURE_COMMANDS` grants this workflow permissions to use the `set-env` and `add-path` commands. There is a vulnerability in these commands that could result in environment variables being modified by an attacker. Depending on the use of the environment variable, this could enable an attacker to, at worst, modify the system path to run a different command than intended, resulting in arbitrary code execution. This could result in stolen code or secrets. Don't use `ACTIONS_ALLOW_UNSECURE_COMMANDS`. Instead, use Environment Files. See https://github.com/actions/toolkit/blob/main/docs/commands.md#environment-files for more information.
+  metadata:
+    cwe:
+    - 'CWE-749: Exposed Dangerous Method or Function'
+    owasp: A06:2017 - Security Misconfiguration
+    references:
+    - https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/
+    - https://github.com/actions/toolkit/security/advisories/GHSA-mfwh-5m23-j46w
+    - https://github.com/actions/toolkit/blob/main/docs/commands.md#environment-files
+    category: security
+    technology:
+    - github-actions
+    subcategory:
+    - vuln
+    likelihood: LOW
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Dangerous Method or Function
+    source: https://semgrep.dev/r/yaml.github-actions.security.allowed-unsecure-commands.allowed-unsecure-commands
+    shortlink: https://sg.run/qq78
+    semgrep.dev:
+      rule:
+        r_id: 13412
+        rv_id: 947039
+        rule_id: EwUQ9x
+        version_id: jQTzq34
+        url: https://semgrep.dev/playground/r/jQTzq34/yaml.github-actions.security.allowed-unsecure-commands.allowed-unsecure-commands
+        origin: community
+  patterns:
+  - pattern-either:
+    - patterns:
+      - pattern-inside: '{env: ...}'
+      - pattern: 'ACTIONS_ALLOW_UNSECURE_COMMANDS: true'
 - id: python.django.security.injection.raw-html-format.raw-html-format
   languages:
   - python
@@ -16238,6 +16571,167 @@ rules:
 
             '
     - pattern-not-inside: println(...)
+- id: yaml.kubernetes.security.secrets-in-config-file.secrets-in-config-file
+  patterns:
+  - pattern: '$KEY: $VALUE
+
+      '
+  - pattern-inside: 'data: ...
+
+      '
+  - pattern-inside: 'kind: Secret
+
+      ...
+
+      '
+  - metavariable-regex:
+      metavariable: $VALUE
+      regex: (?i)^[aA-zZ0-9+/]+={0,2}$
+  - metavariable-analysis:
+      analyzer: entropy
+      metavariable: $VALUE
+  message: 'Secrets ($VALUE) should not be stored in infrastructure as code files. Use an alternative such as Bitnami Sealed Secrets or KSOPS to encrypt Kubernetes Secrets. '
+  metadata:
+    cwe:
+    - 'CWE-798: Use of Hard-coded Credentials'
+    category: security
+    technology:
+    - kubernetes
+    references:
+    - https://kubernetes.io/docs/concepts/configuration/secret/
+    - https://media.defense.gov/2021/Aug/03/2002820425/-1/-1/0/CTR_Kubernetes_Hardening_Guidance_1.1_20220315.PDF
+    - https://docs.gitlab.com/ee/user/clusters/agent/gitops/secrets_management.html
+    - https://www.cncf.io/blog/2021/04/22/revealing-the-secrets-of-kubernetes-secrets/
+    - https://github.com/bitnami-labs/sealed-secrets
+    - https://www.cncf.io/blog/2022/01/25/secrets-management-essential-when-using-kubernetes/
+    - https://blog.oddbit.com/post/2021-03-09-getting-started-with-ksops/
+    owasp:
+    - A07:2021 - Identification and Authentication Failures
+    - A07:2025 - Authentication Failures
+    cwe2022-top25: true
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: LOW
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Hard-coded Secrets
+    source: https://semgrep.dev/r/yaml.kubernetes.security.secrets-in-config-file.secrets-in-config-file
+    shortlink: https://sg.run/KyL6
+    semgrep.dev:
+      rule:
+        r_id: 20055
+        rv_id: 1263942
+        rule_id: YGUYEb
+        version_id: xyTjz5B
+        url: https://semgrep.dev/playground/r/xyTjz5B/yaml.kubernetes.security.secrets-in-config-file.secrets-in-config-file
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
+- id: dockerfile.security.last-user-is-root.last-user-is-root
+  patterns:
+  - pattern: USER root
+  - pattern-not-inside:
+      patterns:
+      - pattern: 'USER root
+
+          ...
+
+          USER $X
+
+          '
+      - metavariable-pattern:
+          metavariable: $X
+          patterns:
+          - pattern-not: root
+  message: The last user in the container is 'root'. This is a security hazard because if an attacker gains control of the container they will have root access. Switch back to another user after running commands as 'root'.
+  severity: ERROR
+  languages:
+  - dockerfile
+  metadata:
+    cwe:
+    - 'CWE-269: Improper Privilege Management'
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3002
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3002
+    category: security
+    technology:
+    - dockerfile
+    confidence: MEDIUM
+    owasp:
+    - A04:2021 - Insecure Design
+    - A06:2025 - Insecure Design
+    subcategory:
+    - audit
+    likelihood: MEDIUM
+    impact: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/dockerfile.security.last-user-is-root.last-user-is-root
+    shortlink: https://sg.run/5Z43
+    semgrep.dev:
+      rule:
+        r_id: 20147
+        rv_id: 1262658
+        rule_id: ReU2n5
+        version_id: 6xT29Eg
+        url: https://semgrep.dev/playground/r/6xT29Eg/dockerfile.security.last-user-is-root.last-user-is-root
+        origin: community
+- id: dockerfile.security.missing-user.missing-user
+  patterns:
+  - pattern: 'CMD $...VARS
+
+      '
+  - pattern-not-inside: 'USER $USER
+
+      ...
+
+      '
+  - pattern-not-inside: 'HEALTHCHECK ... CMD ...
+
+      '
+  fix: 'USER non-root
+
+    CMD $...VARS
+
+    '
+  message: By not specifying a USER, a program in the container may run as 'root'. This is a security hazard. If an attacker can control a process running as root, they may have control over the container. Ensure that the last USER in a Dockerfile is a USER other than 'root'.
+  severity: ERROR
+  languages:
+  - dockerfile
+  metadata:
+    cwe:
+    - 'CWE-250: Execution with Unnecessary Privileges'
+    category: security
+    technology:
+    - dockerfile
+    confidence: MEDIUM
+    owasp:
+    - A04:2021 - Insecure Design
+    - A06:2025 - Insecure Design
+    references:
+    - https://owasp.org/Top10/A04_2021-Insecure_Design
+    subcategory:
+    - audit
+    likelihood: LOW
+    impact: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/dockerfile.security.missing-user.missing-user
+    shortlink: https://sg.run/Gbvn
+    semgrep.dev:
+      rule:
+        r_id: 20148
+        rv_id: 1262660
+        rule_id: AbUN06
+        version_id: zyTb2n2
+        url: https://semgrep.dev/playground/r/zyTb2n2/dockerfile.security.missing-user.missing-user
+        origin: community
 - id: python.aws-lambda.security.dynamodb-filter-injection.dynamodb-filter-injection
   mode: taint
   metadata:
@@ -17559,6 +18053,58 @@ rules:
       - metavariable-regex:
           metavariable: $URLSTR
           regex: http(s?)://%(v|s|q).*
+- id: yaml.kubernetes.security.run-as-non-root-unsafe-value.run-as-non-root-unsafe-value
+  patterns:
+  - pattern-either:
+    - pattern: "spec:\n  ...\n  securityContext:\n    ...\n    runAsNonRoot: $VALUE\n"
+    - patterns:
+      - pattern-inside: "containers:\n  ...\n"
+      - pattern: "image: ...\n...\nsecurityContext:\n  ...\n  runAsNonRoot: $VALUE\n"
+  - metavariable-pattern:
+      metavariable: $VALUE
+      pattern: 'false
+
+        '
+  - focus-metavariable: $VALUE
+  fix: 'true
+
+    '
+  message: When running containers in Kubernetes, it's important to ensure that they  are properly secured to prevent privilege escalation attacks.  One potential vulnerability is when a container is allowed to run  applications as the root user, which could allow an attacker to gain  access to sensitive resources. To mitigate this risk, it's recommended to  add a `securityContext` to the container, with the parameter `runAsNonRoot`  set to `true`. This will ensure that the container runs as a non-root user,  limiting the damage that could be caused by any potential attacks. By  adding a `securityContext` to the container in your Kubernetes pod, you can  help to ensure that your containerized applications are more secure and  less vulnerable to privilege escalation attacks.
+  metadata:
+    references:
+    - https://kubernetes.io/blog/2016/08/security-best-practices-kubernetes-deployment/
+    - https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+    - https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html#rule-2-set-a-user
+    cwe:
+    - 'CWE-250: Execution with Unnecessary Privileges'
+    owasp:
+    - A05:2021 - Security Misconfiguration
+    - A06:2017 - Security Misconfiguration
+    - A02:2025 - Security Misconfiguration
+    category: security
+    technology:
+    - kubernetes
+    subcategory:
+    - audit
+    likelihood: MEDIUM
+    impact: HIGH
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/yaml.kubernetes.security.run-as-non-root-unsafe-value.run-as-non-root-unsafe-value
+    shortlink: https://sg.run/D9No
+    semgrep.dev:
+      rule:
+        r_id: 26096
+        rv_id: 1263939
+        rule_id: L1UAxy
+        version_id: NdTzyj8
+        url: https://semgrep.dev/playground/r/NdTzyj8/yaml.kubernetes.security.run-as-non-root-unsafe-value.run-as-non-root-unsafe-value
+        origin: community
+  languages:
+  - yaml
+  severity: INFO
 - id: csharp.dotnet.security.audit.missing-or-broken-authorization.missing-or-broken-authorization
   message: Anonymous access shouldn't be allowed unless explicit by design. Access control checks are missing and potentially can be bypassed. This finding violates the principle of least privilege or deny by default, where access should only be permitted for a specific set of roles or conforms to a custom policy or users.
   severity: INFO
@@ -20120,6 +20666,48 @@ rules:
   languages:
   - csharp
   severity: WARNING
+- id: java.spring.security.audit.spring-actuator-fully-enabled-yaml.spring-actuator-fully-enabled-yaml
+  patterns:
+  - pattern-inside: "management:\n  ...\n  endpoints:\n    ...\n    web:\n      ...\n      exposure:\n        ...\n"
+  - pattern: 'include: "*"
+
+      '
+  message: Spring Boot Actuator is fully enabled. This exposes sensitive endpoints such as /actuator/env, /actuator/logfile, /actuator/heapdump and others. Unless you have Spring Security enabled or another means to protect these endpoints, this functionality is available without authentication, causing a severe security risk.
+  severity: WARNING
+  languages:
+  - yaml
+  metadata:
+    cwe:
+    - 'CWE-200: Exposure of Sensitive Information to an Unauthorized Actor'
+    owasp:
+    - A01:2021 - Broken Access Control
+    - A01:2025 - Broken Access Control
+    references:
+    - https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-endpoints-exposing-endpoints
+    - https://medium.com/walmartglobaltech/perils-of-spring-boot-actuators-misconfiguration-185c43a0f785
+    - https://blog.maass.xyz/spring-actuator-security-part-1-stealing-secrets-using-spring-actuators
+    category: security
+    technology:
+    - spring
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: HIGH
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Mishandled Sensitive Information
+    source: https://semgrep.dev/r/java.spring.security.audit.spring-actuator-fully-enabled-yaml.spring-actuator-fully-enabled-yaml
+    shortlink: https://sg.run/1Bzw
+    semgrep.dev:
+      rule:
+        r_id: 29422
+        rv_id: 1263076
+        rule_id: eqUerQ
+        version_id: w8TRo5n
+        url: https://semgrep.dev/playground/r/w8TRo5n/java.spring.security.audit.spring-actuator-fully-enabled-yaml.spring-actuator-fully-enabled-yaml
+        origin: community
 - id: python.django.security.injection.command.subprocess-injection.subprocess-injection
   languages:
   - python
@@ -20433,6 +21021,80 @@ rules:
         version_id: bZT53gQ
         url: https://semgrep.dev/playground/r/bZT53gQ/python.flask.security.injection.subprocess-injection.subprocess-injection
         origin: community
+- id: yaml.github-actions.security.github-script-injection.github-script-injection
+  languages:
+  - yaml
+  message: 'Using variable interpolation `${{...}}` with `github` context data in a `actions/github-script`''s `script:` step could allow an attacker to inject their own code into the runner. This would allow them to steal secrets and code. `github` context data can have arbitrary user input and should be treated as untrusted. Instead, use an intermediate environment variable with `env:` to store the data and use the environment variable in the `run:` script. Be sure to use double-quotes the environment variable, like this: "$ENVVAR".'
+  metadata:
+    category: security
+    cwe:
+    - 'CWE-94: Improper Control of Generation of Code (''Code Injection'')'
+    owasp:
+    - A03:2021 - Injection
+    - A05:2025 - Injection
+    references:
+    - https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
+    - https://securitylab.github.com/research/github-actions-untrusted-input/
+    - https://github.com/actions/github-script
+    technology:
+    - github-actions
+    cwe2022-top25: true
+    subcategory:
+    - vuln
+    likelihood: HIGH
+    impact: HIGH
+    confidence: HIGH
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Code Injection
+    source: https://semgrep.dev/r/yaml.github-actions.security.github-script-injection.github-script-injection
+    shortlink: https://sg.run/g1G0
+    semgrep.dev:
+      rule:
+        r_id: 31441
+        rv_id: 1263928
+        rule_id: OrUQvK
+        version_id: o5TbDwO
+        url: https://semgrep.dev/playground/r/o5TbDwO/yaml.github-actions.security.github-script-injection.github-script-injection
+        origin: community
+  patterns:
+  - pattern-inside: 'steps: [...]'
+  - pattern-inside: 'uses: $ACTION
+
+      ...
+
+      '
+  - pattern-inside: "with:\n  ...\n  script: ...\n  ...\n"
+  - pattern: 'script: $SHELL'
+  - metavariable-regex:
+      metavariable: $ACTION
+      regex: actions/github-script@.*
+  - metavariable-pattern:
+      language: generic
+      metavariable: $SHELL
+      patterns:
+      - pattern-either:
+        - pattern: ${{ github.event.issue.title }}
+        - pattern: ${{ github.event.issue.body }}
+        - pattern: ${{ github.event.pull_request.title }}
+        - pattern: ${{ github.event.pull_request.body }}
+        - pattern: ${{ github.event.comment.body }}
+        - pattern: ${{ github.event.review.body }}
+        - pattern: ${{ github.event.review_comment.body }}
+        - pattern: ${{ github.event.pages. ... .page_name}}
+        - pattern: ${{ github.event.head_commit.message }}
+        - pattern: ${{ github.event.head_commit.author.email }}
+        - pattern: ${{ github.event.head_commit.author.name }}
+        - pattern: ${{ github.event.commits ... .author.email }}
+        - pattern: ${{ github.event.commits ... .author.name }}
+        - pattern: ${{ github.event.pull_request.head.ref }}
+        - pattern: ${{ github.event.pull_request.head.label }}
+        - pattern: ${{ github.event.pull_request.head.repo.default_branch }}
+        - pattern: ${{ github.head_ref }}
+        - pattern: ${{ github.event.inputs ... }}
+        - pattern: ${{ github.event.discussion.title }}
+        - pattern: ${{ github.event.discussion.body }}
+  severity: ERROR
 - id: python.cryptography.security.mode-without-authentication.crypto-mode-without-authentication
   message: 'An encryption mode of operation is being used without proper message authentication. This can potentially result in the encrypted content to be decrypted by an attacker. Consider instead use an AEAD mode of operation like GCM. '
   languages:
@@ -20553,6 +21215,51 @@ rules:
             - pattern: AES.MODE_CTR
             - pattern: AES.MODE_CFB
             - pattern: AES.MODE_OFB
+- id: java.spring.security.audit.spring-actuator-non-health-enabled-yaml.spring-actuator-dangerous-endpoints-enabled-yaml
+  patterns:
+  - pattern-inside: "management:\n  ...\n  endpoints:\n    ...\n    web:\n      ...\n      exposure:\n        ...\n        include:\n          ...\n"
+  - pattern: 'include: [..., $ACTUATOR, ...]
+
+      '
+  - metavariable-comparison:
+      metavariable: $ACTUATOR
+      comparison: not str($ACTUATOR) in ["health","*"]
+  message: Spring Boot Actuator "$ACTUATOR" is enabled. Depending on the actuator, this can pose a significant security risk. Please double-check if the actuator is needed and properly secured.
+  severity: WARNING
+  languages:
+  - yaml
+  metadata:
+    cwe:
+    - 'CWE-200: Exposure of Sensitive Information to an Unauthorized Actor'
+    owasp:
+    - A01:2021 - Broken Access Control
+    - A01:2025 - Broken Access Control
+    references:
+    - https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-endpoints-exposing-endpoints
+    - https://medium.com/walmartglobaltech/perils-of-spring-boot-actuators-misconfiguration-185c43a0f785
+    - https://blog.maass.xyz/spring-actuator-security-part-1-stealing-secrets-using-spring-actuators
+    category: security
+    technology:
+    - spring
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: HIGH
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Mishandled Sensitive Information
+    source: https://semgrep.dev/r/java.spring.security.audit.spring-actuator-non-health-enabled-yaml.spring-actuator-dangerous-endpoints-enabled-yaml
+    shortlink: https://sg.run/JzKQ
+    semgrep.dev:
+      rule:
+        r_id: 32290
+        rv_id: 1263078
+        rule_id: kxUWpX
+        version_id: O9TpxBp
+        url: https://semgrep.dev/playground/r/O9TpxBp/java.spring.security.audit.spring-actuator-non-health-enabled-yaml.spring-actuator-dangerous-endpoints-enabled-yaml
+        origin: community
 - id: java.spring.security.audit.spring-actuator-non-health-enabled.spring-actuator-dangerous-endpoints-enabled
   patterns:
   - pattern: management.endpoints.web.exposure.include=$...ACTUATORS
@@ -21157,6 +21864,51 @@ rules:
   pattern-either:
   - pattern: (RSAPKCS1KeyExchangeFormatter $FORMATER).CreateKeyExchange(...);
   - pattern: (RSAPKCS1KeyExchangeDeformatter $DEFORMATER).DecryptKeyExchange(...);
+- id: yaml.github-actions.security.workflow-run-target-code-checkout.workflow-run-target-code-checkout
+  languages:
+  - yaml
+  message: This GitHub Actions workflow file uses `workflow_run` and checks out code from the incoming pull request. When using `workflow_run`, the Action runs in the context of the target repository, which includes access to all repository secrets. Normally, this is safe because the Action only runs code from the target repository, not the incoming PR. However, by checking out the incoming PR code, you're now using the incoming code for the rest of the action. You may be inadvertently executing arbitrary code from the incoming PR with access to repository secrets, which would let an attacker steal repository secrets. This normally happens by running build scripts (e.g., `npm build` and `make`) or dependency installation scripts (e.g., `python setup.py install`). Audit your workflow file to make sure no code from the incoming PR is executed. Please see https://securitylab.github.com/research/github-actions-preventing-pwn-requests/ for additional mitigations.
+  metadata:
+    category: security
+    owasp: A01:2017 - Injection
+    cwe: 'CWE-913: Improper Control of Dynamically-Managed Code Resources'
+    likelihood: MEDIUM
+    impact: MEDIUM
+    confidence: MEDIUM
+    subcategory:
+    - vuln
+    references:
+    - https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+    - https://github.com/justinsteven/advisories/blob/master/2021_github_actions_checkspelling_token_leak_via_advice_symlink.md
+    - https://www.legitsecurity.com/blog/github-privilege-escalation-vulnerability
+    technology:
+    - github-actions
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Code Injection
+    source: https://semgrep.dev/r/yaml.github-actions.security.workflow-run-target-code-checkout.workflow-run-target-code-checkout
+    shortlink: https://sg.run/A0p6
+    semgrep.dev:
+      rule:
+        r_id: 35494
+        rv_id: 947046
+        rule_id: 4bU8E4
+        version_id: kbTYRwl
+        url: https://semgrep.dev/playground/r/kbTYRwl/yaml.github-actions.security.workflow-run-target-code-checkout.workflow-run-target-code-checkout
+        origin: community
+  patterns:
+  - pattern-inside: "on:\n  ...\n  workflow_run: ...\n  ...\n...\n"
+  - pattern-inside: "jobs:\n  ...\n  $JOBNAME:\n    ...\n    steps:\n      ...\n"
+  - pattern: "...\nuses: \"$ACTION\"\nwith:\n  ...\n  ref: $EXPR\n"
+  - metavariable-regex:
+      metavariable: $ACTION
+      regex: actions/checkout@.*
+  - metavariable-pattern:
+      language: generic
+      metavariable: $EXPR
+      patterns:
+      - pattern: ${{ github.event.workflow_run ... }}
+  severity: WARNING
 - id: csharp.dotnet.security.use_deprecated_cipher_algorithm.use_deprecated_cipher_algorithm
   message: Usage of deprecated cipher algorithm detected. Use Aes or ChaCha20Poly1305 instead.
   severity: ERROR
@@ -21363,6 +22115,77 @@ rules:
   fix: 'getSha512Digest
 
     '
+- id: yaml.argo.security.argo-workflow-parameter-command-injection.argo-workflow-parameter-command-injection
+  message: Using input or workflow parameters in here-scripts can lead to command injection or code injection. Convert the parameters to env variables instead.
+  languages:
+  - yaml
+  metadata:
+    category: security
+    cwe:
+    - 'CWE-78: Improper Neutralization of Special Elements used in an OS Command (''OS Command Injection'')'
+    - 'CWE-94: Improper Control of Generation of Code (''Code Injection'')'
+    owasp:
+    - A03:2021 – Injection
+    confidence: MEDIUM
+    likelihood: MEDIUM
+    impact: HIGH
+    subcategory:
+    - vuln
+    references:
+    - https://github.com/argoproj/argo-workflows/issues/5061
+    - https://github.com/argoproj/argo-workflows/issues/5114#issue-808865370
+    technology:
+    - ci
+    - argo
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Code Injection
+    - Command Injection
+    source: https://semgrep.dev/r/yaml.argo.security.argo-workflow-parameter-command-injection.argo-workflow-parameter-command-injection
+    shortlink: https://sg.run/yqeZ
+    semgrep.dev:
+      rule:
+        r_id: 40768
+        rv_id: 1151472
+        rule_id: 10U0zW
+        version_id: xyTp17z
+        url: https://semgrep.dev/playground/r/xyTp17z/yaml.argo.security.argo-workflow-parameter-command-injection.argo-workflow-parameter-command-injection
+        origin: community
+  severity: ERROR
+  patterns:
+  - pattern-inside: 'apiVersion: $VERSION
+
+      ...
+
+      '
+  - metavariable-regex:
+      metavariable: $VERSION
+      regex: (argoproj.io.*)
+  - pattern-either:
+    - patterns:
+      - pattern-inside: "command:\n  ...\n  - $LANG\n  ...\n...\nsource:\n  $SCRIPT\n"
+      - metavariable-regex:
+          metavariable: $LANG
+          regex: .*(sh|bash|ksh|csh|tcsh|zsh|python|python3|node|perl|ruby|php|lua|awk|sed|powershell|fish|dash|R|grooby|scala|clj|elixir|coffee|dart|haskell|ocaml).*
+      - metavariable-pattern:
+          metavariable: $SCRIPT
+          pattern-either:
+          - pattern-regex: (.*{{.*inputs.parameters.*}}.*)
+          - pattern-regex: (.*{{.*workflow.parameters.*}}.*)
+      - focus-metavariable: $SCRIPT
+    - patterns:
+      - pattern-either:
+        - pattern-inside: "container:\n  ...\n  command: $LANG\n  ...\n  args: $PARAM\n"
+        - pattern-inside: "containerSet:\n  ...\n  containers:\n    - ...\n      command: $LANG\n      ...\n      args: $PARAM\n"
+      - metavariable-regex:
+          metavariable: $LANG
+          regex: .*(sh|bash|ksh|csh|tcsh|zsh|python|python3|node|perl|ruby|php|lua|awk|sed|powershell|fish|dash|R|grooby|scala|clj|elixir|coffee|dart|haskell|ocaml).*
+      - metavariable-pattern:
+          metavariable: $PARAM
+          pattern-either:
+          - pattern-regex: (.*{{.*inputs.parameters.*}}.*)
+          - pattern-regex: (.*{{.*workflow.parameters.*}}.*)
+      - focus-metavariable: $PARAM
 - id: python.cryptography.security.empty-aes-key.empty-aes-key
   message: Potential empty AES encryption key. Using an empty key in AES encryption can result in weak encryption and may allow attackers to easily decrypt sensitive data. Ensure that a strong, non-empty key is used for AES encryption.
   patterns:
@@ -21404,6 +22227,167 @@ rules:
         version_id: 8KTKjRg
         url: https://semgrep.dev/playground/r/8KTKjRg/python.cryptography.security.empty-aes-key.empty-aes-key
         origin: community
+- id: dockerfile.security.missing-user-entrypoint.missing-user-entrypoint
+  patterns:
+  - pattern: 'ENTRYPOINT $...VARS
+
+      '
+  - pattern-not-inside: 'USER $USER
+
+      ...
+
+      '
+  fix: 'USER non-root
+
+    ENTRYPOINT $...VARS
+
+    '
+  message: By not specifying a USER, a program in the container may run as 'root'. This is a security hazard. If an attacker can control a process running as root, they may have control over the container. Ensure that the last USER in a Dockerfile is a USER other than 'root'.
+  severity: ERROR
+  languages:
+  - dockerfile
+  metadata:
+    cwe:
+    - 'CWE-269: Improper Privilege Management'
+    category: security
+    technology:
+    - dockerfile
+    confidence: MEDIUM
+    owasp:
+    - A04:2021 - Insecure Design
+    - A06:2025 - Insecure Design
+    references:
+    - https://owasp.org/Top10/A04_2021-Insecure_Design
+    subcategory:
+    - audit
+    likelihood: LOW
+    impact: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/dockerfile.security.missing-user-entrypoint.missing-user-entrypoint
+    shortlink: https://sg.run/k281
+    semgrep.dev:
+      rule:
+        r_id: 47272
+        rv_id: 1262659
+        rule_id: ReUW9E
+        version_id: o5TbD21
+        url: https://semgrep.dev/playground/r/o5TbD21/dockerfile.security.missing-user-entrypoint.missing-user-entrypoint
+        origin: community
+- id: yaml.kubernetes.security.allow-privilege-escalation-no-securitycontext.allow-privilege-escalation-no-securitycontext
+  patterns:
+  - pattern-inside: "containers:\n  ...\n"
+  - pattern-inside: "- $NAME: $CONTAINER\n  ...\n"
+  - pattern: 'image: ...
+
+      ...
+
+      '
+  - pattern-not: "image: ...\n...\nsecurityContext:\n  ...\n"
+  - metavariable-regex:
+      metavariable: $NAME
+      regex: name
+  - focus-metavariable: $NAME
+  fix: "securityContext:\n  allowPrivilegeEscalation: false\n$NAME\n"
+  message: In Kubernetes, each pod runs in its own isolated environment with its own set of security policies. However, certain container images may contain `setuid` or `setgid` binaries that could allow an attacker to perform privilege escalation and gain access to sensitive resources. To mitigate this risk, it's recommended to add a `securityContext` to the container in the pod, with the parameter `allowPrivilegeEscalation` set to `false`. This will prevent the container from running any privileged processes and limit the impact of any potential attacks. By adding a `securityContext` to your Kubernetes pod, you can help to ensure that your containerized applications are more secure and less vulnerable to privilege escalation attacks.
+  metadata:
+    cwe:
+    - 'CWE-732: Incorrect Permission Assignment for Critical Resource'
+    owasp:
+    - A05:2021 - Security Misconfiguration
+    - A06:2017 - Security Misconfiguration
+    - A02:2025 - Security Misconfiguration
+    references:
+    - https://kubernetes.io/docs/concepts/policy/pod-security-policy/#privilege-escalation
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    - https://www.kernel.org/doc/Documentation/prctl/no_new_privs.txt
+    - https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html#rule-4-add-no-new-privileges-flag
+    category: security
+    technology:
+    - kubernetes
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/yaml.kubernetes.security.allow-privilege-escalation-no-securitycontext.allow-privilege-escalation-no-securitycontext
+    shortlink: https://sg.run/eleR
+    semgrep.dev:
+      rule:
+        r_id: 47276
+        rv_id: 1263931
+        rule_id: WAU5J6
+        version_id: 2KTv2j8
+        url: https://semgrep.dev/playground/r/2KTv2j8/yaml.kubernetes.security.allow-privilege-escalation-no-securitycontext.allow-privilege-escalation-no-securitycontext
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
+- id: yaml.kubernetes.security.allow-privilege-escalation-true.allow-privilege-escalation-true
+  patterns:
+  - pattern-inside: "containers:\n  ...\n"
+  - pattern-inside: "- name: $CONTAINER\n  ...\n"
+  - pattern-inside: 'image: ...
+
+      ...
+
+      '
+  - pattern-inside: "securityContext:\n  ...\n"
+  - pattern: 'allowPrivilegeEscalation: $TRUE
+
+      '
+  - metavariable-pattern:
+      metavariable: $TRUE
+      pattern: 'true
+
+        '
+  - focus-metavariable: $TRUE
+  fix: 'false
+
+    '
+  message: In Kubernetes, each pod runs in its own isolated environment with its own  set of security policies. However, certain container images may contain  `setuid` or `setgid` binaries that could allow an attacker to perform  privilege escalation and gain access to sensitive resources. To mitigate  this risk, it's recommended to add a `securityContext` to the container in  the pod, with the parameter `allowPrivilegeEscalation` set to `false`.  This will prevent the container from running any privileged processes and  limit the impact of any potential attacks.  In the container `$CONTAINER` this parameter is set to `true` which makes this container much more vulnerable to privelege escalation attacks.
+  metadata:
+    cwe:
+    - 'CWE-732: Incorrect Permission Assignment for Critical Resource'
+    owasp:
+    - A05:2021 - Security Misconfiguration
+    - A06:2017 - Security Misconfiguration
+    - A02:2025 - Security Misconfiguration
+    references:
+    - https://kubernetes.io/docs/concepts/policy/pod-security-policy/#privilege-escalation
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    - https://www.kernel.org/doc/Documentation/prctl/no_new_privs.txt
+    - https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html#rule-4-add-no-new-privileges-flag
+    category: security
+    technology:
+    - kubernetes
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: MEDIUM
+    confidence: MEDIUM
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/yaml.kubernetes.security.allow-privilege-escalation-true.allow-privilege-escalation-true
+    shortlink: https://sg.run/vw3W
+    semgrep.dev:
+      rule:
+        r_id: 47277
+        rv_id: 1263932
+        rule_id: 0oUkqQ
+        version_id: X0Tzyqr
+        url: https://semgrep.dev/playground/r/X0Tzyqr/yaml.kubernetes.security.allow-privilege-escalation-true.allow-privilege-escalation-true
+        origin: community
+  languages:
+  - yaml
+  severity: WARNING
 - id: java.lang.security.audit.crypto.use-of-aes-ecb.use-of-aes-ecb
   pattern: $CIPHER.getInstance("=~/AES/ECB.*/")
   metadata:
@@ -22039,6 +23023,45 @@ rules:
         version_id: rxT6rGR
         url: https://semgrep.dev/playground/r/rxT6rGR/java.android.security.exported_activity.exported_activity
         origin: community
+- id: dockerfile.security.no-sudo-in-dockerfile.no-sudo-in-dockerfile
+  patterns:
+  - pattern: 'RUN sudo ...
+
+      '
+  message: Avoid using sudo in Dockerfiles. Running processes as a non-root user can help  reduce the potential impact of configuration errors and security vulnerabilities.
+  metadata:
+    category: security
+    technology:
+    - dockerfile
+    cwe:
+    - 'CWE-250: Execution with Unnecessary Privileges'
+    owasp:
+    - A05:2021 - Security Misconfiguration
+    - A02:2025 - Security Misconfiguration
+    references:
+    - https://cwe.mitre.org/data/definitions/250.html
+    - https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
+    subcategory:
+    - audit
+    likelihood: LOW
+    impact: LOW
+    confidence: HIGH
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/dockerfile.security.no-sudo-in-dockerfile.no-sudo-in-dockerfile
+    shortlink: https://sg.run/80Q7
+    semgrep.dev:
+      rule:
+        r_id: 66384
+        rv_id: 1262661
+        rule_id: kxUlx1
+        version_id: pZT03zY
+        url: https://semgrep.dev/playground/r/pZT03zY/dockerfile.security.no-sudo-in-dockerfile.no-sudo-in-dockerfile
+        origin: community
+  languages:
+  - dockerfile
+  severity: WARNING
 - id: java.lang.security.audit.tainted-env-from-http-request.tainted-env-from-http-request
   message: Detected input from a HTTPServletRequest going into the environment variables of an 'exec' command.  Instead, call the command with user-supplied arguments by using the overloaded method with one String array as the argument. `exec({"command", "arg1", "arg2"})`.
   languages:
@@ -22413,6 +23436,69 @@ rules:
   - pattern: xml.etree.ElementTree.parse($...ARGS)
   - pattern-not: xml.etree.ElementTree.parse("...")
   fix: defusedxml.etree.ElementTree.parse($...ARGS)
+- id: yaml.kubernetes.security.legacy-api-clusterrole-excessive-permissions.legacy-api-clusterrole-excessive-permissions
+  patterns:
+  - pattern: '"*"
+
+      '
+  - pattern-inside: 'resources: $A
+
+      ...
+
+      '
+  - pattern-inside: 'verbs: $A
+
+      ...
+
+      '
+  - pattern-inside: "- apiGroups: [\"\"]\n  ...\n"
+  - pattern-inside: 'apiVersion: rbac.authorization.k8s.io/v1
+
+      ...
+
+      '
+  - pattern-inside: 'kind: ClusterRole
+
+      ...
+
+      '
+  message: 'Semgrep detected a Kubernetes core API ClusterRole with excessive permissions. Attaching excessive permissions to a ClusterRole associated with the core namespace allows the V1 API to perform arbitrary actions on arbitrary resources attached to the cluster. Prefer explicit allowlists of verbs/resources when configuring the core API namespace. '
+  languages:
+  - yaml
+  severity: WARNING
+  metadata:
+    cwe:
+    - 'CWE-269: Improper Privilege Management'
+    owasp:
+    - A05:2021 - Security Misconfiguration
+    - A06:2017 - Security Misconfiguration
+    - A02:2025 - Security Misconfiguration
+    references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole
+    - https://kubernetes.io/docs/concepts/security/rbac-good-practices/#general-good-practice
+    - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#api-groups
+    category: security
+    technology:
+    - kubernetes
+    cwe2021-top25: false
+    subcategory:
+    - vuln
+    likelihood: MEDIUM
+    impact: HIGH
+    confidence: HIGH
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authorization
+    source: https://semgrep.dev/r/yaml.kubernetes.security.legacy-api-clusterrole-excessive-permissions.legacy-api-clusterrole-excessive-permissions
+    shortlink: https://sg.run/x6Dz
+    semgrep.dev:
+      rule:
+        r_id: 73474
+        rv_id: 1263935
+        rule_id: GdUR2A
+        version_id: 9lT4bw7
+        url: https://semgrep.dev/playground/r/9lT4bw7/yaml.kubernetes.security.legacy-api-clusterrole-excessive-permissions.legacy-api-clusterrole-excessive-permissions
+        origin: community
 - id: python.fastapi.security.wildcard-cors.wildcard-cors
   languages:
   - python
@@ -22455,6 +23541,53 @@ rules:
         rule_id: lBU4JQ3
         version_id: A8Tgd1R
         url: https://semgrep.dev/playground/r/A8Tgd1R/python.fastapi.security.wildcard-cors.wildcard-cors
+        origin: community
+- id: yaml.openapi.security.use-of-basic-authentication.use-of-basic-authentication
+  languages:
+  - yaml
+  message: Basic authentication is considered weak and should be avoided.  Use a different authentication scheme, such of OAuth2, OpenID Connect, or mTLS.
+  severity: ERROR
+  patterns:
+  - pattern-inside: "openapi: $VERSION\n...\ncomponents:\n  ...\n  securitySchemes:\n    ...\n    $SCHEME:\n      ...\n"
+  - metavariable-regex:
+      metavariable: $VERSION
+      regex: 3.*
+  - pattern: 'type: http
+
+      ...
+
+      scheme: basic
+
+      '
+  metadata:
+    category: security
+    subcategory:
+    - vuln
+    technology:
+    - openapi
+    likelihood: MEDIUM
+    impact: HIGH
+    confidence: HIGH
+    cwe: 'CWE-287: Improper Authentication'
+    owasp:
+    - A04:2021 Insecure Design
+    - A07:2021 Identification and Authentication Failures
+    references:
+    - https://cwe.mitre.org/data/definitions/287.html
+    - https://owasp.org/Top10/A04_2021-Insecure_Design/
+    - https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Improper Authentication
+    source: https://semgrep.dev/r/yaml.openapi.security.use-of-basic-authentication.use-of-basic-authentication
+    shortlink: https://sg.run/v8wNW
+    semgrep.dev:
+      rule:
+        r_id: 133077
+        rv_id: 947072
+        rule_id: zdUKgEX
+        version_id: 0bT1ErG
+        url: https://semgrep.dev/playground/r/0bT1ErG/yaml.openapi.security.use-of-basic-authentication.use-of-basic-authentication
         origin: community
 - id: python.twilio.security.twiml-injection.twiml-injection
   languages:
@@ -22515,6 +23648,47 @@ rules:
 
         '
     - focus-metavariable: $SINK
+- id: yaml.openapi.security.openai-consequential-action-false.openai-consequential-action-false
+  languages:
+  - yaml
+  message: 'Found ''x-openai-isConsequential: false'' in a state-changing HTTP method: $METHOD $PATH. This Action configuration will enable the ''Always Allow'' option for state-changing HTTP methods, such as POST, PUT, PATCH, or DELETE. The risk of a user selecting the ''Always Allow'' button is that the agent could perform unintended actions on behalf of the user. When working with sensitive functionality, it is always best to include a Human In The Loop (HITL) type of control. Consider the trade-off between security  and user friction and then make a risk-based decision about this function.'
+  severity: WARNING
+  pattern-either:
+  - pattern-inside: "post:\n  ...\n  x-openai-isConsequential: false\n"
+  - pattern-inside: "put:\n  ...\n  x-openai-isConsequential: false\n"
+  - pattern-inside: "patch:\n  ...\n  x-openai-isConsequential: false\n"
+  - pattern-inside: "delete:\n  ...\n  x-openai-isConsequential: false\n"
+  metadata:
+    category: security
+    subcategory:
+    - audit
+    technology:
+    - openapi
+    - openai
+    likelihood: HIGH
+    impact: HIGH
+    confidence: HIGH
+    cwe: 'CWE-441: Unintended Proxy or Intermediary (''Confused Deputy'')'
+    owasp:
+    - A04:2021 Insecure Design
+    - LLM08:2023 - Excessive Agency
+    references:
+    - https://platform.openai.com/docs/actions/consequential-flag
+    - https://owasp.org/Top10/A04_2021-Insecure_Design/
+    - https://owasp.org/www-project-top-10-for-large-language-model-applications/assets/PDF/OWASP-Top-10-for-LLMs-2023-v1_1.pdf
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Server-Side Request Forgery (SSRF)
+    source: https://semgrep.dev/r/yaml.openapi.security.openai-consequential-action-false.openai-consequential-action-false
+    shortlink: https://sg.run/x8EEP
+    semgrep.dev:
+      rule:
+        r_id: 146574
+        rv_id: 947071
+        rule_id: yyURooD
+        version_id: WrTEZN8
+        url: https://semgrep.dev/playground/r/WrTEZN8/yaml.openapi.security.openai-consequential-action-false.openai-consequential-action-false
+        origin: community
 - id: python.lang.security.insecure-uuid-version.insecure-uuid-version
   patterns:
   - pattern: uuid.uuid1(...)
@@ -22697,6 +23871,77 @@ rules:
   - pattern-either:
     - pattern: flask.url_for(..., _external=$VAR, ...)
     - pattern: url_for(..., _external=$VAR, ...)
+- id: yaml.github-actions.security.detect-shai-hulud-backdoor.detect-shai-hulud-backdoor
+  languages:
+  - yaml
+  message: The Shai-hulud backdoor creates a purposefully vulnerable github action with the name `discussion.yaml`.
+  paths:
+    include:
+    - '**/.github/workflows/discussion.yaml'
+  metadata:
+    category: security
+    cwe:
+    - 'CWE-509: Replicating Malicious Code (Virus or Worm)'
+    owasp:
+    - A01:2017 - Injection
+    - A03:2021 - Injection
+    - A05:2025 - Injection
+    technology:
+    - github-actions
+    cwe2022-top25: true
+    cwe2021-top25: true
+    subcategory:
+    - vuln
+    likelihood: HIGH
+    impact: HIGH
+    confidence: HIGH
+    license: Semgrep Rules License v1.0. For more details, visit semgrep.dev/legal/rules-license
+    vulnerability_class:
+    - Command Injection
+    source_rule_url: https://www.wiz.io/blog/shai-hulud-2-0-ongoing-supply-chain-attack
+    references:
+    - https://www.aikido.dev/blog/shai-hulud-strikes-again-hitting-zapier-ensdomains
+    source: https://semgrep.dev/r/yaml.github-actions.security.detect-shai-hulud-backdoor.detect-shai-hulud-backdoor
+    shortlink: https://sg.run/JdYPZ
+    semgrep.dev:
+      rule:
+        r_id: 238946
+        rv_id: 1263927
+        rule_id: 7KUDRPj
+        version_id: 6xT29ol
+        url: https://semgrep.dev/playground/r/6xT29ol/yaml.github-actions.security.detect-shai-hulud-backdoor.detect-shai-hulud-backdoor
+        origin: community
+  patterns:
+  - pattern-inside: 'steps: [...]'
+  - pattern-inside: "- run: ...\n  ...\n"
+  - pattern: 'run: $SHELL'
+  - metavariable-pattern:
+      language: generic
+      metavariable: $SHELL
+      patterns:
+      - pattern-either:
+        - pattern: ${{ github.event.issue.title }}
+        - pattern: ${{ github.event.issue.body }}
+        - pattern: ${{ github.event.pull_request.title }}
+        - pattern: ${{ github.event.pull_request.body }}
+        - pattern: ${{ github.event.comment.body }}
+        - pattern: ${{ github.event.review.body }}
+        - pattern: ${{ github.event.review_comment.body }}
+        - pattern: ${{ github.event.pages. ... .page_name}}
+        - pattern: ${{ github.event.head_commit.message }}
+        - pattern: ${{ github.event.head_commit.author.email }}
+        - pattern: ${{ github.event.head_commit.author.name }}
+        - pattern: ${{ github.event.commits ... .author.email }}
+        - pattern: ${{ github.event.commits ... .author.name }}
+        - pattern: ${{ github.event.pull_request.head.ref }}
+        - pattern: ${{ github.event.pull_request.head.label }}
+        - pattern: ${{ github.event.pull_request.head.repo.default_branch }}
+        - pattern: ${{ github.head_ref }}
+        - pattern: ${{ github.event.inputs ... }}
+        - pattern: ${{ github.event.discussion.title }}
+        - pattern: ${{ github.event.discussion.body }}
+        - pattern: ${{ inputs ... }}
+  severity: ERROR
 - id: python.lang.security.audit.insecure-file-permissions.insecure-file-permissions
   languages:
   - python
@@ -22715,6 +23960,7 @@ rules:
     cwe2022-top25: true
     cwe2021-top25: true
     subcategory:
+    
     - vuln
     likelihood: LOW
     impact: MEDIUM
@@ -27124,8 +28370,6 @@ rules:
   languages:
   - csharp
   severity: ERROR
-
-# === coverage-expansion 2026-06-03 (LDAP/XPath/response-splitting C#, weak-PRNG, hard-coded key/cred) ===
 - id: custom.csharp.ldap.dynamic-filter
   languages:
   - csharp
